@@ -1,21 +1,21 @@
 package com.tehasdf.sstable.input
 
-import java.io.DataInput
-import java.io.DataInputStream
 import com.tehasdf.sstable.CompressionInfoReader
 import org.xerial.snappy.Snappy
-import java.io.ByteArrayInputStream
+import java.io.{ByteArrayInputStream, DataInputStream}
+import java.io.FileOutputStream
 
 class SnappyCompressedSeekableDataStream(data: SeekableDataInputStream, compressionInfo: CompressionInfoReader) extends SeekableDataInputStream {
   case class Chunk(index: Int, startPosition: Long, data: Array[Byte], inputStream: ByteArrayInputStream, dataInputStream: DataInputStream)
 
-  def length = data.length
-  def position = currentChunk.startPosition + (currentChunk.data.length - currentChunk.inputStream.available())
+  def length = compressionInfo.dataLength
+  def position = currentPosition
   def seek(to: Long) = {
     throw new Exception("OMFG NOT IMPLEMENTED !!!")
   }
 
   private var currentOffset = 0
+  private var currentPosition = 0L
   private val offsets = compressionInfo.toList
   private var currentChunk = readNextChunk()
 
@@ -44,12 +44,13 @@ class SnappyCompressedSeekableDataStream(data: SeekableDataInputStream, compress
     if ( currentChunk.inputStream.available() < numBytes ) {
       val available = currentChunk.inputStream.available()
       currentChunk.inputStream.read(buf, 0, available)
-      readNextChunk()
+      currentChunk = readNextChunk()
       currentChunk.inputStream.read(buf, available, numBytes-available)
     } else {
       currentChunk.inputStream.read(buf, 0, numBytes)
     }
 
+    currentPosition += numBytes
     f(new DataInputStream(new ByteArrayInputStream(buf)))
   }
 

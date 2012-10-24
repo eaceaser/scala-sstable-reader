@@ -34,7 +34,6 @@ class IndexReader(index: SeekableDataInputStream) extends Iterator[Key] {
         val key = new String(buf)
         val pos = index.readLong()
         val rv = Key(key, pos)
-        println(rv)
         rv
       }
     }

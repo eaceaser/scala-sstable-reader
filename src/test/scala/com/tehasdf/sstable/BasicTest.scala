@@ -10,6 +10,7 @@ import org.scalatest.junit.JUnitRunner
 import java.io.DataInputStream
 import com.tehasdf.sstable.input.FileSeekableDataInputStream
 import com.tehasdf.sstable.input.SnappyCompressedSeekableDataStream
+import java.util.UUID
 
 @RunWith(classOf[JUnitRunner])
 class BasicTest extends FunSuite {
@@ -41,19 +42,6 @@ class BasicTest extends FunSuite {
     println(dataLength)
 
     val colData = new Array[Byte](dataLength)
-    tableIs.readFully(colData)
-
-    val b2 = (tableIs.readByte() & 0xFF) << 8
-    val length2 = b2 | (tableIs.readByte() & 0xFF)
-
-    println(length2) */
-
-    val ci = new File("/Users/eac/stupid/blobstore-StorageNodeMetadata-hc-1126711-CompressionInfo.db")
-    val data = new File("/Users/eac/stupid/blobstore-StorageNodeMetadata-hc-1126711-Data.db")
-    val index = new File("/Users/eac/stupid/blobstore-StorageNodeMetadata-hc-1126711-Index.db")
-    val reader = new CompressedDataReader(new SnappyCompressedSeekableDataStream(new FileSeekableDataInputStream(data), new CompressionInfoReader(new FileInputStream(ci))))
-    reader.foreach { data =>
-      println(data)
-    }
+    tableIs.readFully(colData) */
   }
 }

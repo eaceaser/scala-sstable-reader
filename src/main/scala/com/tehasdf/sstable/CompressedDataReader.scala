@@ -8,9 +8,10 @@ import org.xerial.snappy.Snappy
 import com.tehasdf.sstable.input.SeekableDataInputStream
 import java.io.ByteArrayInputStream
 
-case class Row(key: String, data: Array[Byte])
+case class Row(key: String, columns: ColumnReader)
 class CompressedDataReader(data: SeekableDataInputStream) extends Iterator[Row] {
   def hasNext = data.position < data.length
+
   def next() = {
     val temp = (data.readByte() & 0xFF) << 8
     val length = temp | (data.readByte() & 0xFF)
@@ -23,6 +24,7 @@ class CompressedDataReader(data: SeekableDataInputStream) extends Iterator[Row] 
 
     val dataBuf = new Array[Byte](dataLength.toInt)
     data.readFully(dataBuf)
-    Row(new String(keyBuf, "UTF-8"), dataBuf)
+
+    Row(new String(keyBuf, "UTF-8"), new ColumnReader(new ByteArrayInputStream(dataBuf)))
   }
 }
