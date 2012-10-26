@@ -9,7 +9,7 @@ import com.tehasdf.sstable.input.SeekableDataInputStream
 import java.io.ByteArrayInputStream
 
 case class Row(key: String, columns: ColumnReader)
-class CompressedDataReader(data: SeekableDataInputStream) extends Iterator[Row] {
+class DataReader(data: SeekableDataInputStream) extends Iterator[Row] {
   def hasNext = data.position < data.length
 
   def next() = {
