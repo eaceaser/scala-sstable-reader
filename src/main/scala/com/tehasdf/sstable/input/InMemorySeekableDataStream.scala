@@ -11,22 +11,14 @@ object InMemorySeekableDataStream {
     val baos = new ByteArrayOutputStream
     chunkOffsets.zipWithIndex.foreach { case (cur, idx) =>
       val next = chunkOffsets.lift(idx+1).getOrElse(compressedData.length.toLong)
-      println("window: %d -> %d".format(cur, next))
       val buf = new Array[Byte]((next-cur-4).toInt)
       compressedIs.readFully(buf)
       compressedIs.skipBytes(4)
-      println("wtf? remaining: %d".format(compressedIs.available()))
       val uncompressed = Snappy.uncompress(buf)
       baos.write(uncompressed)
     }
 
     val uncompressedData = baos.toByteArray()
-
-    val crap = File.createTempFile("crap", "dat", new File("/Users/eac/stupid/crap"))
-    val os = new FileOutputStream(crap)
-    os.write(uncompressedData)
-    os.close()
-
     new InMemorySeekableDataStream(uncompressedData)
   }
 }

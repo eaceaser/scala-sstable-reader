@@ -1,38 +1,46 @@
 package com.tehasdf.sstable
 
-import java.io.File
-import java.io.DataInputStream
-import java.io.FileInputStream
-import scala.collection.JavaConversions._
-import org.xerial.snappy.Snappy
 import com.tehasdf.sstable.input.SeekableDataInputStream
-import java.io.ByteArrayInputStream
+
+import java.io.{ByteArrayInputStream, EOFException}
 
 case class Row(key: String, columns: ColumnReader)
+
 class DataReader(data: SeekableDataInputStream) extends Iterator[Row] {
   private def readKeyLength() = {
     val temp = (data.readByte() & 0xFF) << 8
     temp | (data.readByte() & 0xFF)
   }
 
+  // yuck.. state! prevents multiple passes though.
+  var currentKey: Array[Byte] = null
+  var currentData: Array[Byte] = null
+
+
   def hasNext = {
     if (data.remaining < 2) {
+      currentKey = null; currentData = null
       false
     } else {
       val pos = data.position
       val len = readKeyLength()
       if (data.remaining < len) {
+        currentKey = null; currentData = null
         false
       } else {
-        data.skipBytes(len)
+        currentKey = new Array[Byte](len)
+        data.readFully(currentKey)
         if (data.remaining < 8) {
+          currentKey = null; currentData = null
           false
         } else {
           val dataLength = data.readLong()
           if (data.remaining < dataLength) {
+            currentKey = null; currentData = null
             false
           } else {
-            data.seek(pos)
+            currentData = new Array[Byte](dataLength.toInt)
+            data.readFully(currentData)
             true
           }
         }
@@ -41,17 +49,7 @@ class DataReader(data: SeekableDataInputStream) extends Iterator[Row] {
   }
 
   def next() = {
-    val length = readKeyLength()
-    val keyBuf = new Array[Byte](length)
-    data.readFully(keyBuf)
-
-    // TODO: Could be an int, make configurable
-    val dataLength = data.readLong()
-
-    println("reading a key of len %d w/ len : %d".format(length, dataLength))
-    val dataBuf = new Array[Byte](dataLength.toInt)
-    data.readFully(dataBuf)
-
-    Row(new String(keyBuf, "UTF-8"), new ColumnReader(new ByteArrayInputStream(dataBuf)))
+    if (currentKey == null || currentData == null) throw new EOFException("Attempted to read a row after the end of the data stream.")
+    Row(new String(currentKey, "UTF-8"), new ColumnReader(new ByteArrayInputStream(currentData)))
   }
 }
