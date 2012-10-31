@@ -6,6 +6,7 @@ trait Seekable {
   def seek(to: Long): Unit
   def position: Long
   def length: Long
+  def remaining = length - position
 }
 
 trait SeekableDataInputStream extends DataInput with Seekable

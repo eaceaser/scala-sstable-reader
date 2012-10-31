@@ -10,18 +10,45 @@ import java.io.ByteArrayInputStream
 
 case class Row(key: String, columns: ColumnReader)
 class DataReader(data: SeekableDataInputStream) extends Iterator[Row] {
-  def hasNext = data.position < data.length
+  private def readKeyLength() = {
+    val temp = (data.readByte() & 0xFF) << 8
+    temp | (data.readByte() & 0xFF)
+  }
+
+  def hasNext = {
+    if (data.remaining < 2) {
+      false
+    } else {
+      val pos = data.position
+      val len = readKeyLength()
+      if (data.remaining < len) {
+        false
+      } else {
+        data.skipBytes(len)
+        if (data.remaining < 8) {
+          false
+        } else {
+          val dataLength = data.readLong()
+          if (data.remaining < dataLength) {
+            false
+          } else {
+            data.seek(pos)
+            true
+          }
+        }
+      }
+    }
+  }
 
   def next() = {
-    val temp = (data.readByte() & 0xFF) << 8
-    val length = temp | (data.readByte() & 0xFF)
-
+    val length = readKeyLength()
     val keyBuf = new Array[Byte](length)
     data.readFully(keyBuf)
 
     // TODO: Could be an int, make configurable
     val dataLength = data.readLong()
 
+    println("reading a key of len %d w/ len : %d".format(length, dataLength))
     val dataBuf = new Array[Byte](dataLength.toInt)
     data.readFully(dataBuf)
 
