@@ -1,9 +1,8 @@
 package com.tehasdf.sstable.input
 
 import org.xerial.snappy.Snappy
+
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream}
-import java.io.File
-import java.io.FileOutputStream
 
 object InMemorySeekableDataStream {
   def fromSnappyCompressedData(compressedData: Array[Byte], chunkOffsets: Seq[Long]) = {

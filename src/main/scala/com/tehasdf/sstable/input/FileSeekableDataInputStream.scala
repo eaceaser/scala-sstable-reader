@@ -1,8 +1,6 @@
 package com.tehasdf.sstable.input
 
-import java.io.File
-import java.io.FileInputStream
-import java.io.DataInputStream
+import java.io.{DataInputStream, File, FileInputStream}
 
 class FileSeekableDataInputStream(file: File) extends SeekableDataInputStream {
   val fis = new FileInputStream(file)

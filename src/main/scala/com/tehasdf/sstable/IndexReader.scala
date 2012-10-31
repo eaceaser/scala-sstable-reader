@@ -1,13 +1,10 @@
 package com.tehasdf.sstable
 
-import java.io.File
+import com.tehasdf.sstable.input.{FileSeekableDataInputStream, SeekableDataInputStream}
+
+import java.io.{File, IOException}
+
 import scala.collection.Iterator
-import java.io.FileInputStream
-import java.io.DataInputStream
-import java.io.InputStream
-import com.tehasdf.sstable.input.SeekableDataInputStream
-import com.tehasdf.sstable.input.FileSeekableDataInputStream
-import java.io.IOException
 
 case class Key(name: String, pos: Long)
 

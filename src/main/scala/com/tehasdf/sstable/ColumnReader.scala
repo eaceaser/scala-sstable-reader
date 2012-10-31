@@ -1,7 +1,6 @@
 package com.tehasdf.sstable
 
-import java.io.InputStream
-import java.io.DataInputStream
+import java.io.{DataInputStream, InputStream}
 
 object ColumnReader {
   private[ColumnReader] val DeletionMask = 0x01

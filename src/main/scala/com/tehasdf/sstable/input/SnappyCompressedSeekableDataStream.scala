@@ -1,9 +1,10 @@
 package com.tehasdf.sstable.input
 
 import com.tehasdf.sstable.CompressionInfoReader
+
 import org.xerial.snappy.Snappy
+
 import java.io.{ByteArrayInputStream, DataInputStream}
-import java.io.FileOutputStream
 
 class SnappyCompressedSeekableDataStream(data: SeekableDataInputStream, compressionInfo: CompressionInfoReader) extends SeekableDataInputStream {
   case class Chunk(index: Int, startPosition: Long, data: Array[Byte], inputStream: ByteArrayInputStream, dataInputStream: DataInputStream)

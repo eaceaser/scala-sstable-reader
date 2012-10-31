@@ -1,7 +1,6 @@
 package com.tehasdf.sstable
 
-import java.io.InputStream
-import java.io.DataInputStream
+import java.io.{DataInputStream, InputStream}
 
 class CompressionInfoReader(is: InputStream) extends Iterator[Long] {
   val dis = new DataInputStream(is)
