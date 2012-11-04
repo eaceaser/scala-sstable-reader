@@ -4,7 +4,7 @@ import com.tehasdf.sstable.input.SeekableDataInputStream
 
 import java.io.{ByteArrayInputStream, EOFException}
 
-case class Row(key: String, columns: ColumnReader)
+case class Row(key: Array[Byte], columns: ColumnReader)
 
 class DataReader(data: SeekableDataInputStream) extends Iterator[Row] {
   private def readKeyLength() = {
@@ -50,6 +50,6 @@ class DataReader(data: SeekableDataInputStream) extends Iterator[Row] {
 
   def next() = {
     if (currentKey == null || currentData == null) throw new EOFException("Attempted to read a row after the end of the data stream.")
-    Row(new String(currentKey, "UTF-8"), new ColumnReader(new ByteArrayInputStream(currentData)))
+    Row(currentKey, new ColumnReader(new ByteArrayInputStream(currentData)))
   }
 }
