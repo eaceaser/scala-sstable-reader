@@ -2,7 +2,7 @@ package com.tehasdf.sstable
 
 import java.io.{DataInputStream, InputStream}
 
-class CompressionInfoReader(is: InputStream) extends Iterator[Long] {
+class CompressionInfoReader(is: InputStream) extends CompressionInfo {
   val dis = new DataInputStream(is)
   val compressor = dis.readUTF()
   val numOpts = dis.readInt()

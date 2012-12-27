@@ -1,20 +1,23 @@
 package com.tehasdf.sstable.input
 
 import com.tehasdf.sstable.CompressionInfoReader
-
 import org.xerial.snappy.Snappy
-
 import java.io.{ByteArrayInputStream, DataInputStream}
+import com.tehasdf.sstable.CompressionInfo
 
-class SnappyCompressedSeekableDataStream(data: SeekableDataInputStream, compressionInfo: CompressionInfoReader) extends SeekableDataInputStream {
+class SnappyCompressedSeekableDataStream(data: SeekableDataInputStream, compressionInfo: CompressionInfo) extends SeekableDataInputStream {
   case class Chunk(index: Int, startPosition: Long, data: Array[Byte], inputStream: ByteArrayInputStream, dataInputStream: DataInputStream)
 
   def length = compressionInfo.dataLength
   def position = currentPosition
-  def seek(to: Long) = {
-    throw new Exception("OMFG NOT IMPLEMENTED !!!")
+  def seek(to: Long) = { throw new Exception("OMFG NOT IMPLEMENTED !!!") }
+  
+  def decompressEntireStream() = {
+    val buf = new Array[Byte](length.toInt)
+    recursivelyConsumeBytes(length.toInt, buf, 0)
+    buf
   }
-
+  
   private var currentOffset = 0
   private var currentPosition = 0L
   private val offsets = compressionInfo.toList
@@ -40,17 +43,20 @@ class SnappyCompressedSeekableDataStream(data: SeekableDataInputStream, compress
     Chunk(offset, chunkPos, uncompressedData, is, dis)
   }
 
+  private def recursivelyConsumeBytes[A](numBytes: Int, buf: Array[Byte], pos: Int) {
+    if ( currentChunk.inputStream.available() < numBytes-pos ) {
+      val available = currentChunk.inputStream.available()
+      currentChunk.inputStream.read(buf, pos, available)
+      currentChunk = readNextChunk()
+      recursivelyConsumeBytes(numBytes, buf, pos+available)
+    } else {
+      currentChunk.inputStream.read(buf, pos, numBytes-pos)
+    }
+  }
+  
   private def consumeBytes[A](numBytes: Int)(f: DataInputStream => A) = {
     val buf = new Array[Byte](numBytes)
-    if ( currentChunk.inputStream.available() < numBytes ) {
-      val available = currentChunk.inputStream.available()
-      currentChunk.inputStream.read(buf, 0, available)
-      currentChunk = readNextChunk()
-      currentChunk.inputStream.read(buf, available, numBytes-available)
-    } else {
-      currentChunk.inputStream.read(buf, 0, numBytes)
-    }
-
+    recursivelyConsumeBytes(numBytes, buf, 0)
     currentPosition += numBytes
     f(new DataInputStream(new ByteArrayInputStream(buf)))
   }
