@@ -16,7 +16,6 @@ class DataReader(data: SeekableDataInputStream) extends Iterator[Row] {
   var currentKey: Array[Byte] = null
   var currentData: Array[Byte] = null
 
-
   def hasNext = {
     if (data.remaining < 2) {
       currentKey = null; currentData = null
@@ -28,8 +27,12 @@ class DataReader(data: SeekableDataInputStream) extends Iterator[Row] {
         currentKey = null; currentData = null
         false
       } else {
-        currentKey = new Array[Byte](len)
-        data.readFully(currentKey)
+        val rawKey = new Array[Byte](len)
+        data.readFully(rawKey)
+
+        currentKey = rawKey.reverse.dropWhile(_ == 0x00).reverse
+        println(currentKey.map(Integer.toHexString(_)).mkString(" "))
+
         if (data.remaining < 8) {
           currentKey = null; currentData = null
           false

@@ -9,9 +9,11 @@ object ColumnReader {
   private[ColumnReader] val CounterUpdateMask = 0x08
 }
 
-sealed trait ColumnState
-case class Column(name: Array[Byte], data: Array[Byte]) extends ColumnState
-case class Deleted(name: Array[Byte]) extends ColumnState
+sealed trait ColumnState {
+  def timestamp: Long
+}
+case class Column(name: Array[Byte], data: Array[Byte], timestamp: Long) extends ColumnState
+case class Deleted(name: Array[Byte], timestamp: Long) extends ColumnState
 
 class ColumnReader(is: InputStream) extends Iterator[ColumnState] {
   import ColumnReader._
@@ -37,6 +39,7 @@ class ColumnReader(is: InputStream) extends Iterator[ColumnState] {
     val nameBuf = new Array[Byte](colNameLen)
     data.readFully(nameBuf)
 
+    val strippedName = nameBuf.reverse.dropWhile( _ == 0x00 ).reverse
     val bitField = data.readUnsignedByte()
     val rv: ColumnState = if ((bitField & CounterMask) != 0) {
       println("this is a counter")
@@ -57,14 +60,14 @@ class ColumnReader(is: InputStream) extends Iterator[ColumnState] {
       val length = data.readInt()
       val buf = new Array[Byte](length)
       data.readFully(buf)
+
+      val strippedBuf = buf.reverse.dropWhile( _ == 0x00 ).reverse
       if ((bitField & CounterUpdateMask) != 0) {
-        println("stupid")
         null
       } else if ((bitField & DeletionMask) != 0) {
-        println("deleted column!")
-        Deleted(nameBuf)
+        Deleted(strippedName, timestamp)
       } else {
-        Column(nameBuf, buf)
+        Column(strippedName, strippedBuf, timestamp)
       }
     }
 
