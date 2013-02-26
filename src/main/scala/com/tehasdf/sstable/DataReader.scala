@@ -31,7 +31,6 @@ class DataReader(data: SeekableDataInputStream) extends Iterator[Row] {
         data.readFully(rawKey)
 
         currentKey = rawKey.reverse.dropWhile(_ == 0x00).reverse
-        println(currentKey.map(Integer.toHexString(_)).mkString(" "))
 
         if (data.remaining < 8) {
           currentKey = null; currentData = null
