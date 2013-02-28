@@ -14,6 +14,7 @@ sealed trait ColumnState {
 }
 case class Column(name: Array[Byte], data: Array[Byte], timestamp: Long) extends ColumnState
 case class Deleted(name: Array[Byte], timestamp: Long) extends ColumnState
+case class Expiring(name: Array[Byte], data: Array[Byte], ttl: Int, expiration: Int, timestamp: Long) extends ColumnState
 
 class ColumnReader(is: InputStream) extends Iterator[ColumnState] {
   import ColumnReader._
@@ -38,7 +39,6 @@ class ColumnReader(is: InputStream) extends Iterator[ColumnState] {
     val colNameLen = data.readUnsignedShort()
     val nameBuf = new Array[Byte](colNameLen)
     data.readFully(nameBuf)
-
     val strippedName = nameBuf.reverse.dropWhile( _ == 0x00 ).reverse
     val bitField = data.readUnsignedByte()
     val rv: ColumnState = if ((bitField & CounterMask) != 0) {
@@ -48,13 +48,13 @@ class ColumnReader(is: InputStream) extends Iterator[ColumnState] {
       data.skipBytes(cnt)
       null
     } else if ((bitField & ExpirationMask) != 0) {
-      println("expiring column, wtf")
       val ttl = data.readInt()
       val expiration = data.readInt()
       val timestamp = data.readLong()
       val length = data.readInt()
-      data.skipBytes(length)
-      null
+      val buf = new Array[Byte](length)
+      data.readFully(buf)
+      Expiring(nameBuf, buf, ttl, expiration, timestamp)
     } else {
       val timestamp = data.readLong()
       val length = data.readInt()
